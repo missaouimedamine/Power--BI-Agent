@@ -1,0 +1,65 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "powerbi-modeling": {
+      "type": "local",
+      "command": ["npx", "-y", "@microsoft/powerbi-modeling-mcp@latest", "--start"],
+      "enabled": false
+    }
+  },
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "powerbi-agent analyze *": "allow",
+      "powerbi-agent profile *": "allow",
+      "powerbi-agent design-model *": "allow",
+      "powerbi-agent validate *": "allow",
+      "powerbi-agent plan *": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git push*": "deny",
+      "powerbi-agent publish *": "ask",
+      "*": "ask"
+    }
+  },
+  "agent": {
+    "orchestrator": {
+      "mode": "primary",
+      "description": "Plans Power BI analytics work, delegates to specialist agents, and gates destructive or external actions behind user confirmation.",
+      "prompt": "{file:../agents/orchestrator.md}"
+    },
+    "data_analyst": {
+      "mode": "subagent",
+      "description": "Loads, profiles and quality-checks datasets; proposes KPIs, dimensions and insights using deterministic tools.",
+      "prompt": "{file:../agents/data_analyst.md}",
+      "tools": { "write": false, "edit": false }
+    },
+    "data_engineer": {
+      "mode": "subagent",
+      "description": "Cleans and reshapes data into analytical datasets; never overwrites source data.",
+      "prompt": "{file:../agents/data_engineer.md}"
+    },
+    "powerbi_modeler": {
+      "mode": "subagent",
+      "description": "Designs star-schema semantic models and produces PBIP/TMDL or MCP changes after inspecting the existing model.",
+      "prompt": "{file:../agents/powerbi_modeler.md}"
+    },
+    "dax_expert": {
+      "mode": "subagent",
+      "description": "Writes, reuses and validates DAX measures.",
+      "prompt": "{file:../agents/dax_expert.md}"
+    },
+    "report_designer": {
+      "mode": "subagent",
+      "description": "Produces a report specification (pages, visuals, slicers, layout) against a validated semantic model.",
+      "prompt": "{file:../agents/report_designer.md}"
+    },
+    "validator": {
+      "mode": "subagent",
+      "description": "Validates data, model, DAX and report artifacts and returns structured findings.",
+      "prompt": "{file:../agents/validator.md}",
+      "tools": { "write": false, "edit": false }
+    }
+  }
+}

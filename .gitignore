@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Generated workspaces (each workspace can be its own git repo)
+workspaces/*
+!workspaces/.gitkeep
+
+# Local data / databases
+*.duckdb
+*.duckdb.wal
+
+# Power BI local-only files (per Microsoft PBIP guidance)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# OpenCode local install target (see `make opencode-install`)
+.opencode/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

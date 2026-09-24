@@ -1,0 +1,15 @@
+# Runs the CLI in a container. The Power BI Modeling MCP server targets Windows
+# (Power BI Desktop) and Fabric; it is not started inside this container.
+services:
+  agent:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      ALLOW_PUBLISH: "false"
+    volumes:
+      - ./workspaces:/app/workspaces
+      - ./examples:/app/examples:ro
+    command: ["--help"]

@@ -1,0 +1,8 @@
+{
+  "base_rows": 5000,
+  "total_rows": 5031,
+  "missing_customer_ids": 60,
+  "duplicate_rows": 31,
+  "inconsistent_category_rows": 17,
+  "injection_rows": 1
+}
