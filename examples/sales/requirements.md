@@ -24,8 +24,10 @@ Create an executive overview and detailed product analysis.
 ## Expected outcome (acceptance criteria)
 
 - `analysis/`: `profile.json`, `quality_report.json`, `schema.json`, `insights.md`
-- Model: `FactSales` + `DimDate`, `DimCustomer`, `DimProduct`, `DimRegion`;
-  many-to-one, single-direction relationships
+- Model: `FactSales` + `DimDate`, `DimCustomer`, `DimProduct`; many-to-one,
+  single-direction relationships. Region and Country depend on the customer in this
+  data, so they live in `DimCustomer` (hierarchy Region > Country > CustomerName)
+  instead of a separate `DimRegion`
 - Measures: `Total Revenue`, `Total Cost`, `Total Profit`, `Profit Margin` (DIVIDE),
   `Orders` (DISTINCTCOUNT of order id), `Average Order Value` (DIVIDE)
 - Report pages: Executive Overview, Product Analysis (plus Regional / Customer if requested)
@@ -40,7 +42,7 @@ Create an executive overview and detailed product analysis.
 |---|---:|
 | Missing `CustomerID` | 60 |
 | Exact duplicate rows | 31 |
-| Category spelling variants (`bikes`, `ACCESSORIES`, ` Clothing`, ...) | 17 |
+| Category spelling variants of the row's own category (`bikes`, `BIKES`, ` Bikes`, ...) | 17 |
 | Prompt-injection text in a `CustomerName` | 1 |
 
 `Profit` is intentionally absent, so the analyzer has to derive it from `Revenue - Cost`.

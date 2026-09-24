@@ -65,6 +65,15 @@ def test_multiple_files_add_note() -> None:
     assert any("one at a time" in n for n in plan.notes)
 
 
+def test_design_plan_validates_the_model() -> None:
+    plan = RuleBasedPlanner().plan("design a star schema for sales.csv")
+    assert [s.capability for s in plan.steps][-2:] == [
+        Capability.DESIGN_STAR_SCHEMA,
+        Capability.VALIDATE_MODEL,
+    ]
+    assert not plan.requires_confirmation
+
+
 def test_publish_plan_requires_confirmation() -> None:
     plan = RuleBasedPlanner().plan("publish workspaces/sales")
     assert plan.requires_confirmation

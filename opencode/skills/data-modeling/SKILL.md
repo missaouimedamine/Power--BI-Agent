@@ -37,5 +37,16 @@ description: Design a Power BI star schema (facts, dimensions, date table, relat
 }
 ```
 
+## How `design-model` decides (so you can explain or challenge it)
+
+- Grain: smallest unique combination of keys, line/sequence numbers and dates; it must
+  contain a key. Exact duplicate rows are reported, never dropped.
+- Dimension membership: attribute A goes to key K if at least 99% of rows agree with K's
+  most frequent A (case/whitespace-insensitive). If several keys determine A, the key
+  with the fewest values wins (Customer before Order).
+- Geography that depends on the customer stays in DimCustomer (Region > Country >
+  CustomerName). A separate DimRegion would need a RegionKey in the fact.
+- `findings` in `specs/model_design.json` need the user's decision; relay them.
+
 The spec model rejects unknown relationship endpoints, duplicate names (case-insensitive),
 measures that shadow columns, and hierarchies over missing columns.

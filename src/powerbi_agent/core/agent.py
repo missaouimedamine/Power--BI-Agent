@@ -72,9 +72,10 @@ def default_registry() -> AgentRegistry:
     as NOT_IMPLEMENTED, never faked.
     """
     # Imported here: agents depend on this module.
-    from powerbi_agent.agents import DataAnalystAgent, ValidatorAgent
+    from powerbi_agent.agents import DataAnalystAgent, PowerBIModelerAgent, ValidatorAgent
 
     registry = AgentRegistry()
     registry.register(DataAnalystAgent())  # Phase 2
-    registry.register(ValidatorAgent())  # Phase 2 (data validation)
+    registry.register(ValidatorAgent())  # Phase 2 data, Phase 3 model validation
+    registry.register(PowerBIModelerAgent())  # Phase 3
     return registry

@@ -1,6 +1,7 @@
 """End-to-end pipeline tests (Data -> Analysis -> Model -> DAX -> PBIP).
 
-The Data -> Analysis part runs for real in ``test_analysis_e2e.py``. Here, each later
+Data -> Analysis -> Model runs for real in ``test_analysis_e2e.py`` and
+``test_modeling_e2e.py``. Here, each later
 phase replaces the ``xfail`` below with real assertions on generated artifacts. Power BI MCP
 interactions will be exercised against recorded/mock responses, never a real tenant.
 """
@@ -31,7 +32,7 @@ def test_full_request_is_planned_end_to_end() -> None:
     assert not plan.requires_confirmation  # generating local artifacts needs no approval
 
 
-@pytest.mark.xfail(reason="Modeling/DAX/PBIP agents arrive in Phases 3-6", strict=True)
+@pytest.mark.xfail(reason="DAX and PBIP agents arrive in Phases 4-6", strict=True)
 def test_pipeline_produces_pbip(settings: Settings, sales_csv: Path, tmp_path: Path) -> None:
     orch = Orchestrator(default_registry(), settings)
     task = orch.run(f"generate the semantic model from {sales_csv}", tmp_path)

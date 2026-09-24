@@ -136,6 +136,27 @@ def _print_summary(task: Task) -> None:
             for i in qual["issues"]
             if i["rows"]
         ][:10]
+    if design := outputs.get(Capability.DESIGN_STAR_SCHEMA):
+        lines.append("")
+        lines.append(f"Proposed model {design['model']} (grain: {' + '.join(design['grain'])}):")
+        lines += [
+            f"  {t['name']:<14} {t['kind']:<10} {t['rows']:>10,} rows" for t in design["tables"]
+        ]
+        lines.append(f"Relationships: {len(design['relationships'])}")
+        lines += [f"  {r}" for r in design["relationships"]]
+        lines += [f"Hierarchy {h}" for h in design["hierarchies"]]
+        if design["findings"]:
+            lines.append(f"Modeling findings ({len(design['findings'])}):")
+            lines += [f"  - [{f['severity']}] {f['message']}" for f in design["findings"]]
+        lines.append("Changes: " + "; ".join(design["changes"]))
+    checks = [r for r in task.results if r.capability is Capability.VALIDATE_MODEL and r.output]
+    for r in checks:
+        o = r.output
+        lines.append(
+            f"Model validation: {'passed' if o['passed'] else 'FAILED'} "
+            f"({o['checks_passed']} passed, {o['checks_failed']} failed, "
+            f"{o['checks_not_run']} not run)"
+        )
     artifacts = [a for r in task.results for a in r.artifacts]
     if artifacts:
         lines.append(
@@ -148,6 +169,12 @@ def _print_summary(task: Task) -> None:
         out.print("[bold]I found:[/bold]")
         for line in lines:
             out.print(line, markup=False, highlight=False)
+    if design:
+        out.print(
+            "\nNothing has been written to Power BI. I will not modify a Power BI model "
+            "until you confirm.",
+            markup=False,
+        )
 
 
 def _run(

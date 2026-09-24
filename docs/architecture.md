@@ -88,7 +88,8 @@ registers its agents.
 | Agent | Capabilities | Since |
 |---|---|---|
 | `DataAnalystAgent` | `load_data`, `profile_data`, `check_quality`, `generate_insights` | Phase 2 |
-| `ValidatorAgent` | `validate_data` | Phase 2 |
+| `ValidatorAgent` | `validate_data`, `validate_model` | Phases 2, 3 |
+| `PowerBIModelerAgent` | `design_star_schema` | Phase 3 |
 
 An agent reports `SUCCEEDED` only after checking that the artifacts it lists exist.
 
@@ -119,6 +120,42 @@ DataSource ─► loaders/ (csv, excel, parquet, sql) ─► LoadedDataset (Pola
   BOM, confined to the workspace, and the previous version of any file is copied to
   `.agent/history/<task_id>/` first.
 
+### Semantic modeling pipeline (Phase 3)
+
+```text
+LoadedDataset + profile + schema
+  ─► facts.detect_grain        smallest key/sequence/date combination that is unique
+  ─► dimensions.plan_dimensions functional dependencies: which key determines which
+                               attribute; each attribute goes to the most general key
+  ─► build_dimension / detect_hierarchies / build_date_dimension
+  ─► star_schema.design_star_schema ─► ModelDesign (SemanticModelSpec, decisions,
+                                        findings, diff) + materialised tables
+  ─► model_validator ─► ValidationReport
+```
+
+- **Dependencies** are measured per row against each key's most frequent value.
+  Text differing only by case or whitespace counts as the same value; at least 99% of
+  rows must agree. Every row whose value the dimension changes is reported
+  (`attribute_conflicts`), and 90-99% near-misses are reported (`near_dependency`) instead
+  of being silently left in the fact.
+- **Keys** that are nearly unique per row (at least 90% distinct) are row identifiers,
+  never dimensions. Keys with no attributes of their own stay in the fact as degenerate
+  dimensions (e.g. `OrderID`).
+- **Nothing is silently fixed**: fact rows are never dropped (duplicates are reported
+  against the grain), and null foreign keys are reported with how many rows carry
+  attribute values that can no longer be linked.
+- **Date table**: whole years with no gaps, `Month`/`Weekday` sorted by hidden number
+  columns, and a Calendar hierarchy. Datetimes with a time part get a derived date
+  column. Other date columns get inactive (role-playing) relationships.
+- **Relationships** use natural keys, many-to-one and single direction. Fact foreign
+  keys are hidden, and non-additive measures use `summarizeBy: none`.
+- **Inspect before modify**: the previous `specs/semantic_model.json` is loaded and the
+  new design is diffed against it (`+ 1 table ... / No objects removed.`).
+- **Model validation**: spec structure, naming, relationship direction, ambiguous
+  paths (cycles among active relationships), and on the materialised data: column/type
+  match, key uniqueness, key type compatibility, orphan keys, cardinality, date table
+  continuity and coverage, and fact rows equal to source rows.
+
 ### Observability
 
 `utils/logging.py` emits JSON logs to stderr with `timestamp, level, task_id, agent,
@@ -136,7 +173,9 @@ so the MCP server or REST API can be swapped out. MCP tool schemas are discovere
 ```text
 workspaces/<name>/
 ├── analysis/            profile.json, quality_report.json, schema.json, metrics.json, insights.md, charts/
-├── specs/               semantic_model.json, report.json
+├── specs/               semantic_model.json, model_design.{json,md}, report.json
+├── model_data/         FactX.parquet, DimY.parquet, DimDate.parquet
+├── validation/         data_validation.json, model_validation.json
 ├── <Name>.pbip
 ├── <Name>.SemanticModel/
 ├── <Name>.Report/
@@ -153,7 +192,7 @@ workspaces/<name>/
 |---|---|---|
 | 1 | Structure, config, logging, CLI, models, agent interface, docs | **done** |
 | 2 | Loaders (CSV/Excel/Parquet/SQL), profiling, schema roles, data quality, KPIs, insights, charts, data validation, DuckDB tool, sample data (`analyze`, `profile`, data part of `validate`) | **done** |
-| 3 | Star-schema inference, relationships, orphan-key checks, model spec (`design-model`) | not started |
+| 3 | Grain detection, dependency-based dimensions, hierarchies, date table, relationships, model spec + design write-up + diff, materialised tables, model validation (`design-model`, model part of `validate`) | **done** |
 | 4 | DAX generation, static validation, measure library | not started |
 | 5 | Power BI MCP adapter (inspect, modify, execute DAX) | not started |
 | 6 | TMDL/PBIP rendering, git wrappers, diffs (`generate-model`) | not started |

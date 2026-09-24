@@ -55,16 +55,36 @@ def test_analyze_prints_summary_from_tool_outputs(sales_csv: Path, tmp_path: Pat
     assert "duplicate rows: 1" in result.stdout
 
 
-def test_design_model_reports_later_phases_honestly(sales_csv: Path, tmp_path: Path) -> None:
+def test_design_model_writes_spec_and_tables(sales_csv: Path, tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     result = runner.invoke(app, ["design-model", str(sales_csv), "-w", str(ws), "--json"])
+    assert result.exit_code == EXIT_OK, result.stdout
+    task = json.loads(result.stdout)
+    statuses = {r["capability"]: r["status"] for r in task["results"]}
+    assert statuses["design_star_schema"] == statuses["validate_model"] == "succeeded"
+    for name in ["semantic_model.json", "model_design.json", "model_design.md"]:
+        assert (ws / "specs" / name).is_file()
+    assert (ws / "model_data" / "FactSalesSmall.parquet").is_file()
+    assert (ws / "validation" / "model_validation.json").is_file()
+
+
+def test_design_model_summary_promises_no_power_bi_changes(sales_csv: Path, tmp_path: Path) -> None:
+    result = runner.invoke(app, ["design-model", str(sales_csv), "-w", str(tmp_path / "ws")])
+    assert result.exit_code == EXIT_OK
+    assert "Proposed model" in result.stdout
+    assert "Nothing has been written to Power BI" in result.stdout
+
+
+def test_generate_model_reports_later_phases_honestly(sales_csv: Path, tmp_path: Path) -> None:
+    ws = tmp_path / "ws"
+    result = runner.invoke(app, ["generate-model", str(sales_csv), "-w", str(ws), "--json"])
     assert result.exit_code == EXIT_INCOMPLETE
     task = json.loads(result.stdout)
     assert task["status"] == "not_implemented"
     statuses = {r["capability"]: r["status"] for r in task["results"]}
-    assert statuses["validate_data"] == "succeeded"
-    assert statuses["design_star_schema"] == "not_implemented"
-    assert not (ws / "specs").exists()
+    assert statuses["design_star_schema"] == "succeeded"
+    assert statuses["generate_dax"] == "not_implemented"
+    assert not list(ws.glob("*.pbip"))
 
 
 def test_unsupported_file_is_input_error(tmp_path: Path) -> None:

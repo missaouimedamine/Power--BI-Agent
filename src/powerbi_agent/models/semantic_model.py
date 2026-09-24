@@ -81,7 +81,10 @@ class TableSpec(BaseModel):
     kind: TableKind
     columns: list[ColumnSpec] = Field(default_factory=list)
     hierarchies: list[HierarchySpec] = Field(default_factory=list)
-    source: str | None = Field(default=None, description="DataSource name feeding this table.")
+    source: str | None = Field(
+        default=None,
+        description="Workspace-relative path of the materialised table data (Parquet).",
+    )
     description: str = ""
     is_hidden: bool = False
 

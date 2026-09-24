@@ -4,10 +4,11 @@ An AI data-analyst agent platform that goes from a natural-language request and 
 (CSV, Excel, Parquet, SQL) to a validated Power BI semantic model, DAX measures and
 report, built as **PBIP/TMDL + Git + the Power BI Modeling MCP**.
 
-> **Status: Phases 1-2 complete.** Foundation (config, logging, models, planner and
-> orchestrator with its safety gate, CLI) and **data analysis** (CSV/Excel/Parquet/SQL
-> loading, profiling, data quality, KPIs, insights, charts, validation) work end to end.
-> Modeling, DAX, PBIP, report and publish are **not implemented yet**. Their steps report
+> **Status: Phases 1-3 complete.** Foundation (config, logging, models, planner and
+> orchestrator with its safety gate, CLI), **data analysis** (CSV/Excel/Parquet/SQL
+> loading, profiling, data quality, KPIs, insights, charts, validation) and **semantic
+> modeling** (star-schema design, date table, hierarchies, model validation) work end
+> to end. DAX, PBIP, report and publish are **not implemented yet**. Their steps report
 > `not_implemented` (exit code 2) instead of pretending. See
 > [docs/architecture.md](docs/architecture.md#implementation-status).
 
@@ -27,7 +28,8 @@ powerbi-agent plan "Analyze sales.xlsx and create a Power BI sales dashboard"
 
 # 4. Analyse the sample workbook (writes workspaces/sales/analysis/)
 powerbi-agent analyze ./examples/sales/data/sales.xlsx
-powerbi-agent validate ./workspaces/sales     # data checks pass; model checks: not_implemented
+powerbi-agent design-model ./examples/sales/data/sales.xlsx   # proposes the star schema
+powerbi-agent validate ./workspaces/sales     # data + model checks; report: not_implemented
 
 # 5. Development checks
 make check                         # ruff + mypy --strict + pytest
@@ -52,17 +54,17 @@ See [docs/setup.md](docs/setup.md) for model-provider and Power BI authenticatio
 | `powerbi-agent config` / `version` | settings (redacted) / version | ✅ Phase 1 |
 | `powerbi-agent profile <file>` | column profiling → `profile.json`, `schema.json` | ✅ Phase 2 |
 | `powerbi-agent analyze <file>` | profile + quality + KPIs + insights + charts → `analysis/` | ✅ Phase 2 |
-| `powerbi-agent design-model <file>` | star-schema `SemanticModelSpec` | Phase 3 |
+| `powerbi-agent design-model <file>` | star schema → `specs/`, `model_data/` (nothing sent to Power BI) | ✅ Phase 3 |
 | `powerbi-agent generate-model <file>` | PBIP + TMDL project | Phases 4–6 |
 | `powerbi-agent generate-report <file>` | model + report spec/PBIR | Phase 7 |
-| `powerbi-agent validate <workspace>` | structured validation report | data ✅ Phase 2; model/report Phases 3–7 |
+| `powerbi-agent validate <workspace>` | structured validation report | data ✅, model ✅; report Phase 7 |
 | `powerbi-agent publish <workspace>` | publish after validation + confirmation | Phase 8 (disabled) |
 
 All data commands accept `--workspace/-w` and `--json`; Excel sources accept `--sheet`.
 SQL sources: `powerbi-agent analyze --query "SELECT ..." --connection-env SALES_DB_URL`
 (the option takes the *name* of the environment variable holding the URL, never the URL).
 
-## Analysis output
+## Output
 
 ```text
 workspaces/<name>/
@@ -73,7 +75,13 @@ workspaces/<name>/
 │   ├── metrics.json          measure totals, date ranges, suggested KPIs with computed values
 │   ├── insights.md           human-readable summary (data values quoted, never interpreted)
 │   └── charts/               PNG + CSV table view per chart (needs the `viz` extra)
+├── specs/
+│   ├── semantic_model.json   the model IR (tables, columns, relationships, hierarchies)
+│   ├── model_design.json     grain, decisions, findings, diff vs previous design
+│   └── model_design.md       the proposal to review before anything touches Power BI
+├── model_data/*.parquet      materialised fact and dimension tables
 ├── validation/data_validation.json   consistency + source re-check + DuckDB cross-check
+├── validation/model_validation.json  keys, orphans, cardinality, date table, ambiguity
 └── .agent/                   task log; previous versions of overwritten files in history/
 ```
 

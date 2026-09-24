@@ -10,7 +10,8 @@ USER REQUEST
   → data-quality check            CHECK_QUALITY       local_write (quality_report.json)
   → KPIs / dimensions / insights  GENERATE_INSIGHTS   local_write (metrics.json, insights.md, charts/)
   → validate analysis             VALIDATE_DATA       local_write (validation/data_validation.json)
-  → design star schema            DESIGN_STAR_SCHEMA  read_only   (SemanticModelSpec)
+  → design star schema            DESIGN_STAR_SCHEMA  local_write (specs/, model_data/)
+  → validate model                VALIDATE_MODEL      local_write (validation/model_validation.json)
   → generate DAX                  GENERATE_DAX        read_only   (MeasureSpec[])
   → validate DAX                  VALIDATE_DAX        read_only
   → generate PBIP/TMDL            GENERATE_PBIP       local_write (new files in workspace)
@@ -34,7 +35,7 @@ powerbi-agent plan "Analyze sales.xlsx and create an executive sales dashboard"
 |---|---|---|
 | `profile` | profile | load, profile, validate data |
 | `analyze` | analyze, insight, explore, quality | load, profile, quality, insights, validate data |
-| `design_model` | star schema, data model | analysis + design star schema |
+| `design_model` | star schema, data model | analysis + design star schema + validate model |
 | `generate_dax` | dax, measure | analysis + design + DAX + validate DAX |
 | `generate_model` | semantic model, pbip, tmdl | … + generate PBIP + validate model |
 | `generate_report` | dashboard, report, visual, page | … + design report + validate report |

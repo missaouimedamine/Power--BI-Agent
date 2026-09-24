@@ -48,14 +48,21 @@ _INSIGHTS = (
 )
 _CHECK_DATA = (Capability.VALIDATE_DATA, "Validate the analysis outputs", Risk.LOCAL_WRITE)
 _ANALYSIS = [_LOAD, _PROFILE, _QUALITY, _INSIGHTS, _CHECK_DATA]
+_DESIGN_SCHEMA = (
+    Capability.DESIGN_STAR_SCHEMA,
+    "Design the star schema (specs/, model_data/)",
+    Risk.LOCAL_WRITE,
+)
+_CHECK_MODEL = (Capability.VALIDATE_MODEL, "Validate the semantic model", Risk.LOCAL_WRITE)
 _DESIGN = [
-    (Capability.DESIGN_STAR_SCHEMA, "Design the star-schema semantic model spec", Risk.READ_ONLY),
+    _DESIGN_SCHEMA,
+    _CHECK_MODEL,
     (Capability.GENERATE_DAX, "Generate DAX measures", Risk.READ_ONLY),
     (Capability.VALIDATE_DAX, "Validate DAX measures", Risk.READ_ONLY),
 ]
 _BUILD = [
     (Capability.GENERATE_PBIP, "Write PBIP/TMDL artifacts to the workspace", Risk.LOCAL_WRITE),
-    (Capability.VALIDATE_MODEL, "Validate the generated semantic model", Risk.READ_ONLY),
+    (Capability.VALIDATE_MODEL, "Validate the generated PBIP model", Risk.LOCAL_WRITE),
 ]
 _REPORT = [
     (Capability.DESIGN_REPORT, "Design the report specification", Risk.LOCAL_WRITE),
@@ -63,7 +70,7 @@ _REPORT = [
 ]
 _VALIDATE = [
     _CHECK_DATA,
-    (Capability.VALIDATE_MODEL, "Validate the semantic model", Risk.READ_ONLY),
+    _CHECK_MODEL,
     (Capability.VALIDATE_REPORT, "Validate the report", Risk.READ_ONLY),
 ]
 _PUBLISH = [
@@ -73,7 +80,7 @@ _PUBLISH = [
 _TEMPLATES: dict[Intent, list[tuple[Capability, str, Risk]]] = {
     Intent.PROFILE: [_LOAD, _PROFILE, _CHECK_DATA],
     Intent.ANALYZE: _ANALYSIS,
-    Intent.DESIGN_MODEL: _ANALYSIS + _DESIGN[:1],
+    Intent.DESIGN_MODEL: _ANALYSIS + _DESIGN[:2],
     Intent.GENERATE_DAX: _ANALYSIS + _DESIGN,
     Intent.GENERATE_MODEL: _ANALYSIS + _DESIGN + _BUILD,
     Intent.GENERATE_REPORT: _ANALYSIS + _DESIGN + _BUILD + _REPORT,

@@ -50,8 +50,8 @@ _GEOGRAPHY = [
 _SEGMENTS = ["Consumer", "Corporate", "Small Business"]
 _FIRST = ["Alex", "Sam", "Maria", "Chen", "Aisha", "Luca", "Emma", "Noah", "Yuki", "Omar"]
 _LAST = ["Martin", "Garcia", "Muller", "Tanaka", "Smith", "Rossi", "Dubois", "Kim", "Silva"]
-# Case/whitespace variants of real categories (the "invalid categories" defect).
-_CATEGORY_VARIANTS = ["bikes", "ACCESSORIES", " Clothing", "components ", "Bikes "]
+# Case/whitespace variants of the row's own category (the "inconsistent categories" defect).
+_CATEGORY_VARIANTS = [str.lower, str.upper, lambda s: f" {s}", lambda s: f"{s} ", str.swapcase]
 # Order volume by month (1-12): stronger spring and Q4.
 _SEASONALITY = [0.7, 0.7, 0.9, 1.1, 1.2, 1.0, 0.9, 0.9, 1.0, 1.1, 1.4, 1.6]
 
@@ -149,7 +149,7 @@ def generate_sales(
     for i in missing_idx:
         records[i][3] = None
     for n, i in enumerate(category_idx):
-        records[i][10] = _CATEGORY_VARIANTS[n % len(_CATEGORY_VARIANTS)]
+        records[i][10] = _CATEGORY_VARIANTS[n % len(_CATEGORY_VARIANTS)](str(records[i][10]))
     records[injection_idx][4] = INJECTION_TEXT
 
     planted = set(picked)

@@ -21,6 +21,15 @@ skills.
    No objects deleted.
    ```
 
+## Tools
+
+- `powerbi-agent design-model <file>` produces `specs/semantic_model.json`,
+  `specs/model_design.md` (the proposal to show the user) and `model_data/*.parquet`.
+- `powerbi-agent validate <workspace>` then read `validation/model_validation.json`.
+- Present the findings from `model_design.md` (duplicates, blank keys, attribute
+  conflicts, near-dependencies). They are business decisions, so ask the user; do
+  not paper over them.
+
 ## Rules
 
 - Deleting or renaming model objects is destructive and needs explicit user confirmation.
